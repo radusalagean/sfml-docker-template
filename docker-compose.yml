@@ -1,0 +1,25 @@
+services:
+  setup-env:
+    build: .
+    volumes:
+      - .:/workspace
+    command: >
+      sh -c "mkdir -p lib/macos/Frameworks && 
+             mkdir -p lib/macos/macos-arm64-debug && 
+             mkdir -p /bin/macos-arm64-debug && 
+             cp -r /dependencies/lib/* lib"
+
+  interactive-env:
+    build: .
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/workspace
+
+  compile-macos-arm64-debug:
+    build: .
+    volumes:
+      - .:/workspace
+    command: >
+      sh -c "mkdir -p bin/macos-arm64-debug && 
+             oa64-clang++ --std=c++17 -I/SFML/include -L/SFML/build/lib -lsfml-graphics-d -lsfml-window-d -lsfml-system-d -Wl,-rpath,../../lib/macos/macos-arm64-debug -o bin/macos-arm64-debug/sfml-test -v src/main.cpp"
