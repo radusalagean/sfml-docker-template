@@ -1,2 +1,2 @@
-bin/
-lib/
+.DS_Store
+build/
