@@ -26,7 +26,8 @@ RUN apt-get update -qq && apt-get install -y -q --no-install-recommends \
 
 FROM base-latest AS macos-sdk
 RUN apt-get install -y -q --no-install-recommends \
-    clang
+    clang \
+    icnsutils
 ENV OSX_CROSS_PATH=/osxcross
 ARG OSX_VERSION_MIN=11.0
 ARG OSX_SDK=MacOSX13.1.sdk

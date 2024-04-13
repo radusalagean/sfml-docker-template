@@ -11,4 +11,4 @@ oa64-clang++ --std=c++17 \
     -lsfml-graphics-d -lsfml-window-d -lsfml-system-d -lsfml-audio-d \
     -Wl,-rpath,'@executable_path/../lib' \
     -o build/macos-arm64-debug/bin/sfml-test \
-    src/main.cpp src/platform/unix/macos/MacOSImpl.cpp
+    src/main.cpp src/platform/unix/macos/MacOSImpl.cppß
