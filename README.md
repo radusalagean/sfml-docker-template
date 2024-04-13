@@ -9,8 +9,8 @@ A template for creating a portable dev environment with cross-compilation suppor
 
 `docker compose up setup-env-macos-arm64-debug` - Setup macOS ARM64 Debug environment
 
-`docker compose up setup-env-windows-x86_64-debug` - Setup Windows X86_64 Debug environment
+`docker compose up setup-env-windows-x86_64-debug` - Setup Windows x86_64 Debug environment
 
 `docker compose up interactive-env-macos-arm64` - Run ARM64 macOS Debug interactive dev environment
 
-`docker compose up interactive-env-windows-x86_64` - Run Windows X86_64 Debug interactive dev environment
+`docker compose up interactive-env-windows-x86_64` - Run Windows x86_64 Debug interactive dev environment
