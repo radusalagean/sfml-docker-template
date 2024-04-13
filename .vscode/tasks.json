@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Setup
+        {
+            "label": "setup-env-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/setup-env-macos-arm64-debug.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "setup-env-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/setup-env-windows-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Compile
+        {
+            "label": "compile-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/compile-macos-arm64-debug.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "compile-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/compile-windows-x86_64-debug.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
+
+        // Clean
+        {
+            "label": "clean-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/clean-macos-arm64-debug.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/clean-windows-x86_64-debug.sh",
+            "problemMatcher": []
+        }
+    ]
+}

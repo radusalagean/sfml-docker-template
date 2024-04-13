@@ -1,16 +1,12 @@
 services:
+  # Setup
   setup-env-macos-arm64-debug:
     build: 
       context: .
       target: sfml-macos
     volumes:
       - .:/workspace
-    command: >
-      sh -c "mkdir -p build/macos-arm64-debug/bin &&
-             mkdir -p build/macos-arm64-debug/lib &&
-             mkdir -p build/macos-arm64-debug/Frameworks &&
-             cp -r /SFML/build/lib/*.dylib build/macos-arm64-debug/lib/ &&
-             cp -r /SFML/extlibs/libs-osx/Frameworks/* build/macos-arm64-debug/Frameworks/"
+    command: ./scripts/setup_env_macos_arm64_debug.sh
 
   setup-env-windows-x86_64-debug:
     build: 
@@ -18,14 +14,10 @@ services:
       target: sfml-windows
     volumes:
       - .:/workspace
-    command: >
-      sh -c "mkdir -p build/windows-x86_64-debug &&
-             mkdir -p build/windows-x86_64-debug &&
-             cp -r /SFML/build/lib/*.dll build/windows-x86_64-debug/ &&
-             cd /usr/lib/gcc/x86_64-w64-mingw32/10-win32
-             cp libgcc_s_seh-1.dll libstdc++-6.dll /workspace/build/windows-x86_64-debug/"
+    command: ./scripts/setup-env-windows-x86_64-debug.sh
 
-  interactive-env:
+  # Interactive
+  interactive-env-macos-arm64:
     build: 
       context: .
       target: sfml-macos
@@ -34,14 +26,23 @@ services:
     volumes:
       - .:/workspace
 
+  interactive-env-windows-x86_64:
+    build: 
+      context: .
+      target: sfml-windows
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/workspace
+
+  # Compile
   compile-macos-arm64-debug:
     build:
       context: .
       target: sfml-macos
     volumes:
       - .:/workspace
-    command: >
-      sh -c "oa64-clang++ --std=c++17 -I/SFML/include -L/SFML/build/lib -lsfml-graphics-d -lsfml-window-d -lsfml-system-d -Wl,-rpath,'@executable_path/../lib' -o build/macos-arm64-debug/bin/sfml-test src/main.cpp"
+    command: ./scripts/compile-macos-arm64-debug.sh
 
   compile-windows-x86_64-debug:
     build: 
@@ -49,5 +50,4 @@ services:
       target: sfml-windows
     volumes:
       - .:/workspace
-    command: >
-      sh -c "x86_64-w64-mingw32-g++ -o build/windows-x86_64-debug/sfml-test.exe src/main.cpp -Wall --std=c++17 -I/SFML/include -L/SFML/build/lib -lsfml-graphics-d -lsfml-window-d -lsfml-system-d"
+    command: ./scripts/compile-windows-x86_64-debug.sh
