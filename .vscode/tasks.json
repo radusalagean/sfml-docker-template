@@ -15,6 +15,20 @@
             "problemMatcher": []
         },
 
+        // Copy res
+        {
+            "label": "copy-res-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/copy-res-macos-arm64-debug.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "copy-res-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/copy-res-windows-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
         // Compile
         {
             "label": "compile-macos-arm64-debug",
