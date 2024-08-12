@@ -1,6 +1,6 @@
 # sfml-docker-template
 
-A template for creating a portable dev environment with cross-compilation support for macOS, Windows and soon for Linux targets.
+A template for creating a portable dev environment with cross-compilation support for macOS, Windows and Linux targets.
 
 
 ### Docker commands:
