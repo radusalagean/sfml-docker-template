@@ -16,6 +16,14 @@ services:
       - .:/workspace
     command: ./scripts/setup-env-windows-x86_64-debug.sh
 
+  setup-env-linux-x86_64-debug:
+    build:
+      context: .
+      target: sfml-linux
+    volumes:
+      - .:/workspace
+    command: ./scripts/setup-env-linux-x86_64-debug.sh
+
   # Interactive
   interactive-env-macos-arm64:
     build: 
@@ -30,6 +38,15 @@ services:
     build: 
       context: .
       target: sfml-windows
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/workspace
+
+  interactive-env-linux-x86_64:
+    build: 
+      context: .
+      target: sfml-linux
     stdin_open: true
     tty: true
     volumes:

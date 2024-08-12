@@ -14,6 +14,12 @@
             "command": "${workspaceFolder}/scripts/setup-env-windows-x86_64-debug.sh",
             "problemMatcher": []
         },
+        {
+            "label": "setup-env-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/setup-env-linux-x86_64-debug.sh",
+            "problemMatcher": []
+        },
 
         // Copy res
         {
@@ -26,6 +32,12 @@
             "label": "copy-res-windows-x86_64-debug",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/copy-res-windows-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "copy-res-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/copy-res-linux-x86_64-debug.sh",
             "problemMatcher": []
         },
 
@@ -44,6 +56,13 @@
             "group": "build",
             "problemMatcher": []
         },
+        {
+            "label": "compile-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/compile-linux-x86_64-debug.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
 
         // Clean
         {
@@ -56,6 +75,12 @@
             "label": "clean-windows-x86_64-debug",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/clean-windows-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/clean-linux-x86_64-debug.sh",
             "problemMatcher": []
         }
     ]

@@ -75,3 +75,21 @@ WORKDIR "${SFML_PATH}"
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-x86_64-w64-mingw32.cmake
 RUN cmake --build build
 WORKDIR ${WORKSPACE_PATH}
+
+# Linux
+
+FROM base-latest AS sfml-linux
+WORKDIR "${SFML_PATH}"
+RUN git clone --depth=1 --branch ${SFML_VERSION} https://github.com/SFML/SFML.git . && rm -rf ./.git
+COPY cmake/toolchains/toolchain-linux.cmake cmake/toolchains/toolchain-linux.cmake
+RUN apt-get install -y -q \
+    gcc \
+    g++ \
+    xorg-dev \
+    libudev-dev \
+    libopenal-dev \
+    libvorbis-dev \
+    libflac-dev
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-linux.cmake
+RUN cmake --build build
+WORKDIR ${WORKSPACE_PATH}
