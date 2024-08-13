@@ -2154,7 +2154,7 @@ private:
 
     inline std::string getResFilePath(std::string generalPath)
     {
-#ifdef defined(TARGET_ANDROID)
+#if defined(TARGET_ANDROID)
         return generalPath;
 #elif defined(TARGET_LINUX)
         return "../res/" + generalPath;
