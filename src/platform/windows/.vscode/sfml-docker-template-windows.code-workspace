@@ -10,6 +10,13 @@
 	"settings": {
 		"files.associations": {
 			"typeinfo": "cpp"
-		}
+		},
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder:workspace}/**", 
+			"/SFML/include/**"
+		],
+		"C_Cpp.default.compilerPath": "x86_64-w64-mingw32-g++",
+		"C_Cpp.default.cStandard": "c11",
+		"C_Cpp.default.cppStandard": "c++17"
 	}
 }
