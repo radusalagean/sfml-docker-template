@@ -1,70 +1,41 @@
 services:
-  # Setup
-  setup-env-macos-arm64-debug:
-    build: 
-      context: .
-      target: sfml-macos
-    volumes:
-      - .:/workspace
-    command: ./scripts/setup_env_macos_arm64_debug.sh
-
-  setup-env-windows-x86_64-debug:
-    build: 
-      context: .
-      target: sfml-windows
-    volumes:
-      - .:/workspace
-    command: ./scripts/setup-env-windows-x86_64-debug.sh
-
-  setup-env-linux-x86_64-debug:
-    build:
-      context: .
-      target: sfml-linux
-    volumes:
-      - .:/workspace
-    command: ./scripts/setup-env-linux-x86_64-debug.sh
-
-  # Interactive
-  interactive-env-macos-arm64:
-    build: 
-      context: .
-      target: sfml-macos
-    stdin_open: true
-    tty: true
-    volumes:
-      - .:/workspace
-
-  interactive-env-windows-x86_64:
-    build: 
-      context: .
-      target: sfml-windows
-    stdin_open: true
-    tty: true
-    volumes:
-      - .:/workspace
-
-  interactive-env-linux-x86_64:
+  linux:
     build: 
       context: .
       target: sfml-linux
     stdin_open: true
     tty: true
     volumes:
+      - sfml-docker-template-vscode-extensions:/root/.vscode-server/extensions
       - .:/workspace
-
-  # Compile
-  compile-macos-arm64-debug:
-    build:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+    devices:
+      - /dev/snd:/dev/snd
+    environment:
+      - DISPLAY
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    network_mode: host
+    
+  macos:
+    build: 
       context: .
       target: sfml-macos
+    stdin_open: true
+    tty: true
     volumes:
+      - sfml-docker-template-vscode-extensions:/root/.vscode-server/extensions
       - .:/workspace
-    command: ./scripts/compile-macos-arm64-debug.sh
 
-  compile-windows-x86_64-debug:
+  windows:
     build: 
       context: .
       target: sfml-windows
+    stdin_open: true
+    tty: true
     volumes:
+      - sfml-docker-template-vscode-extensions:/root/.vscode-server/extensions
       - .:/workspace
-    command: ./scripts/compile-windows-x86_64-debug.sh
+
+volumes:
+  sfml-docker-template-vscode-extensions:

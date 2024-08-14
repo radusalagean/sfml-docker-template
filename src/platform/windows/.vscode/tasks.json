@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Setup
+        {
+            "label": "setup-env-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/windows/setup-env-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Copy res
+        {
+            "label": "copy-res-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/windows/copy-res-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Compile
+        {
+            "label": "compile-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/windows/compile-x86_64-debug.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
+
+        // Clean
+        {
+            "label": "clean-windows-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/windows/clean-x86_64-debug.sh",
+            "problemMatcher": []
+        }
+    ]
+}

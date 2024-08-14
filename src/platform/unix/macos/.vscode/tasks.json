@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Setup
+        {
+            "label": "setup-env-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/macos/setup-env-arm64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Copy res
+        {
+            "label": "copy-res-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/macos/copy-res-arm64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Compile
+        {
+            "label": "compile-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/macos/compile-arm64-debug.sh",
+            "group": "build",
+            "problemMatcher": []
+        },
+
+        // Clean
+        {
+            "label": "clean-macos-arm64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/macos/clean-arm64-debug.sh",
+            "problemMatcher": []
+        }
+    ]
+}

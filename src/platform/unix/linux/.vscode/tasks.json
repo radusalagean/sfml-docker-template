@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // Setup
+        {
+            "label": "setup-env-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/linux/setup-env-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Copy res
+        {
+            "label": "copy-res-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/linux/copy-res-x86_64-debug.sh",
+            "problemMatcher": []
+        },
+
+        // Compile
+        {
+            "label": "compile-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/linux/compile-x86_64-debug.sh",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+
+        // Clean
+        {
+            "label": "clean-linux-x86_64-debug",
+            "type": "shell",
+            "command": "${workspaceFolder:workspace}/scripts/linux/clean-x86_64-debug.sh",
+            "problemMatcher": []
+        }
+    ]
+}

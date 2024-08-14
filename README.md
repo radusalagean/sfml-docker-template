@@ -2,23 +2,48 @@
 
 A template for creating a portable dev environment with cross-compilation support for macOS, Windows and Linux targets.
 
+## Containers
 
-### Docker commands:
+### Linux container (Main Development Environment)
 
-`docker system prune -a` - Cleanup unused Docker resources
+- This container can be used for:
+    - Development (tested on host OS: Linux)
+        - Supports debugging and running from VSCode via `launch.json` (`F5` and `Ctrl / Cmd` + `F5`)
+    - Compiling binaries for Linux (tested on host OS: Linux, macOS, Windows)
 
-### Setup Env
+- VSCode extensions for development in the container:
+    - C/C++ Extension Pack
+    - Dev Containers
+    - Docker
 
-`docker compose up setup-env-macos-arm64-debug` - Setup macOS ARM64 Debug environment
+- Before starting the container, allow X11 forwarding. On the host the Linux machine:
+    ```
+    xhost local:docker*
+    ```
+- Start the container with:
+    ```
+    docker compose up linux -d
+    ```
 
-`docker compose up setup-env-windows-x86_64-debug` - Setup Windows x86_64 Debug environment
+### macOS container
 
-`docker compose up setup-env-linux-x86_64-debug` - Setup Linux x86_64 Debug environment
+- This container can be used for compiling binaries for macOS (tested from host OS: Linux, macOS, Windows)
+- Start the container with:
+    ```
+    docker compose up macos -d
+    ```
 
-### Start interactive env
+### Windows container
 
-`docker compose up interactive-env-macos-arm64` - Run macOS ARM64 Debug interactive dev environment
+- This container can be used for compiling binaries for Windows (tested from host OS: Linux, macOS, Windows)
+- Start the container with:
+    ```
+    docker compose up windows -d
+    ```
 
-`docker compose up interactive-env-windows-x86_64` - Run Windows x86_64 Debug interactive dev environment
+## Tasks
 
-`docker compose up interactive-env-linux-x86_64` - Run Linux x86_64 Debug interactive dev environment
+- `clean-*` - Removes existing build
+- `setup-*` - Prepares the shared libraries in the run directory
+- `copy-res-*` - Prepares the assets in the run directory
+- `compile-*` - Compiles the executable

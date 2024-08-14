@@ -21,6 +21,8 @@ RUN apt-get update -qq && apt-get install -y -q --no-install-recommends \
     cpio \
     libbz2-dev \
     xz-utils
+WORKDIR "${SFML_PATH}"
+RUN git clone --depth=1 --branch ${SFML_VERSION} https://github.com/SFML/SFML.git . && rm -rf ./.git
 
 # Mac OS
 
@@ -32,9 +34,8 @@ ENV OSX_CROSS_PATH=/osxcross
 ARG OSX_VERSION_MIN=11.0
 ARG OSX_SDK=MacOSX13.1.sdk
 WORKDIR "${OSX_CROSS_PATH}"
-# # TODO Replace this with the original repo when pull request is merged https://github.com/tpoechtrager/osxcross/pull/382
-RUN git clone https://github.com/joseluisq/osxcross . \
-    && git checkout 7740274 \
+RUN git clone https://github.com/tpoechtrager/osxcross . \
+    && git checkout fd32ecc \
     && rm -rf ./.git
 # This is generated from: https://github.com/tpoechtrager/osxcross#packaging-the-sdk
 ADD https://github.com/joseluisq/macosx-sdks/releases/download/13.1/MacOSX13.1.sdk.tar.xz "${OSX_CROSS_PATH}/tarballs/${OSX_SDK}.tar.xz"
@@ -43,7 +44,6 @@ ENV PATH ${OSX_CROSS_PATH}/target/bin:$PATH
 
 FROM macos-sdk AS sfml-macos
 WORKDIR "${SFML_PATH}"
-RUN git clone --depth=1 --branch ${SFML_VERSION} https://github.com/SFML/SFML.git . && rm -rf ./.git
 COPY cmake/toolchains/toolchain-macos.cmake cmake/toolchains/toolchain-macos.cmake
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-macos.cmake
 RUN cmake --build build
@@ -55,8 +55,7 @@ FROM base-latest AS sfml-windows
 RUN apt-get install -y -q \
     g++-mingw-w64-x86-64
 WORKDIR "${SFML_PATH}"
-RUN git clone --depth=1 --branch ${SFML_VERSION} https://github.com/SFML/SFML.git . && rm -rf ./.git
-COPY cmake/toolchains/toolchain-x86_64-w64-mingw32.cmake cmake/toolchains/toolchain-x86_64-w64-mingw32.cmake
+COPY cmake/toolchains/toolchain-windows.cmake cmake/toolchains/toolchain-windows.cmake
 COPY cmake/Modules/FindVORBIS.cmake cmake/Modules/FindVORBIS.cmake
 COPY cmake/Modules/FindFLAC.cmake cmake/Modules/FindFLAC.cmake
 RUN rm extlibs/headers/FLAC/assert.h && \
@@ -72,7 +71,7 @@ RUN rm extlibs/headers/FLAC/assert.h && \
     mv libvorbisfile.a vorbisfile.a && \
     mv libFLAC.a FLAC.a
 WORKDIR "${SFML_PATH}"
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-x86_64-w64-mingw32.cmake
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-windows.cmake
 RUN cmake --build build
 WORKDIR ${WORKSPACE_PATH}
 
@@ -80,16 +79,17 @@ WORKDIR ${WORKSPACE_PATH}
 
 FROM base-latest AS sfml-linux
 WORKDIR "${SFML_PATH}"
-RUN git clone --depth=1 --branch ${SFML_VERSION} https://github.com/SFML/SFML.git . && rm -rf ./.git
 COPY cmake/toolchains/toolchain-linux.cmake cmake/toolchains/toolchain-linux.cmake
 RUN apt-get install -y -q \
     gcc \
     g++ \
+    gdb \
     xorg-dev \
     libudev-dev \
     libopenal-dev \
     libvorbis-dev \
-    libflac-dev
+    libflac-dev \
+    pulseaudio
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-linux.cmake
 RUN cmake --build build
 WORKDIR ${WORKSPACE_PATH}

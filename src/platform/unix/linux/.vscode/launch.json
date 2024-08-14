@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Linux Launch",
+            "type": "cppdbg",
+            "program": "${workspaceFolder:workspace}/build/linux-x86_64-debug/bin/sfml-test",
+            "request": "launch",
+            "cwd": "${workspaceFolder:workspace}/build/linux-x86_64-debug/bin/",
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "compile-linux-x86_64-debug"
+        }
+    ]
+}
