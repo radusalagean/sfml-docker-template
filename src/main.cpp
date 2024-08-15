@@ -32,6 +32,7 @@
 #include <cmath>
 #include <chrono>
 #include <iomanip>
+#include <memory>
 
 #include <SFML/System.hpp>
 #include <SFML/Audio.hpp>
@@ -381,15 +382,15 @@ public:
     }
 };
 
-void handleOffsetAnimationUpdate(sf::Sprite* sprite, OffsetAnimationUpdate* update)
+void handleOffsetAnimationUpdate(sf::Sprite& sprite, OffsetAnimationUpdate& update)
 {
-    switch (update->type)
+    switch (update.type)
     {
         case OffsetAnimationUpdateType::SET_POSITION:
-            sprite->setPosition(update->value);
+            sprite.setPosition(update.value);
             break;
         case OffsetAnimationUpdateType::MOVE:
-            sprite->move(update->value);
+            sprite.move(update.value);
             break;
     }
 }
@@ -480,7 +481,7 @@ private:
 
     //- Users
     std::vector<User> users;
-    User* user;
+    std::unique_ptr<User> user = nullptr;
 
     //- Text files
     const std::string databasePath = "database/database.txt";
@@ -500,7 +501,7 @@ private:
     std::string pinLiveTxt = "****"; std::string amountLiveTxt = "";
 
     //- Outstanding Click / Touch Event
-    sf::Vector2i* outstandIngInteractionEvent;
+    std::unique_ptr<sf::Vector2i> outstandIngInteractionEvent = nullptr;
 
     //- Cursor
     const int CURSOR_CIRCLE_RADIUS = 16;
@@ -508,12 +509,12 @@ private:
     sf::Color cursorCircleIdleColor = sf::Color(255, 0, 0, 0);
 
     //- Action Timer
-    ActionTimer* actionTimer;
+    std::unique_ptr<ActionTimer> actionTimer = nullptr;
 
     //- Animations
 
-    std::list<Animation*> runningAnimations;
-    Animation* cursorAnimation = nullptr;
+    std::list<std::unique_ptr<Animation>> runningAnimations;
+    std::unique_ptr<Animation> cursorAnimation = nullptr;
     // this is different than the card sound time because the end click is not at the end of the sound
     sf::Time cardAnimationTime = sf::milliseconds(1002);
     sf::Time cursorFadeOutAnimationTime = sf::seconds(1.5);
@@ -595,7 +596,7 @@ private:
         return view;
     }
 
-    sf::Vector2i* getScaledPointerCoordinates(int originalX, int originalY)
+    std::unique_ptr<sf::Vector2i> getScaledPointerCoordinates(int originalX, int originalY)
     {
 #ifdef TARGET_ANDROID
         int left = view.getViewport().left * currentWindowSize.x;
@@ -604,9 +605,9 @@ private:
         float scaleY = (currentWindowSize.y - 2 * top) / (float) CANVAS_HEIGHT;
         int processedX = (originalX - left) / scaleX;
         int processedY = (originalY - top) / scaleY;
-        return new sf::Vector2i(processedX, processedY);
+        return std::make_unique<sf::Vector2i>(processedX, processedY);
 #else
-        return new sf::Vector2i(originalX, originalY);
+        return std::make_unique<sf::Vector2i>(originalX, originalY);
 #endif
     }
 
@@ -855,32 +856,29 @@ private:
 
     void updatePointerLocation(int rawX, int rawY)
     {
-        sf::Vector2i* position = getScaledPointerCoordinates(rawX, rawY);
+        std::unique_ptr<sf::Vector2i> position = getScaledPointerCoordinates(rawX, rawY);
         cursorCircle.setPosition(
                 position->x - CURSOR_CIRCLE_RADIUS / (float) 2,
                 position->y - CURSOR_CIRCLE_RADIUS / (float) 2
         );
-        addCursorAnimation(
-                new AlphaAnimation(
-                        cursorFadeOutAnimationTime, 127, 0,
-                        [this](int alpha) -> void {
-                            int currentColorInt = cursorCircle.getFillColor().toInteger();
-                            currentColorInt = currentColorInt >> 8; // get rid of the old alpha
-                            currentColorInt = currentColorInt << 8; // retreat
-                            int newColor = currentColorInt | alpha;
-                            cursorCircle.setFillColor(sf::Color(newColor));
-                        },
-                        [this]() -> void {
-                            cursorCircle.setFillColor(cursorCircleIdleColor);
-                            delete cursorAnimation;
-                            cursorAnimation = nullptr;
-                        }));
+        cursorAnimation = std::make_unique<AlphaAnimation>(
+            cursorFadeOutAnimationTime, 127, 0,
+            [this](int alpha) -> void {
+                int currentColorInt = cursorCircle.getFillColor().toInteger();
+                currentColorInt = currentColorInt >> 8; // get rid of the old alpha
+                currentColorInt = currentColorInt << 8; // retreat
+                int newColor = currentColorInt | alpha;
+                cursorCircle.setFillColor(sf::Color(newColor));
+            },
+            [this]() -> void {
+                cursorCircle.setFillColor(cursorCircleIdleColor);
+                cursorAnimation.reset();
+            }
+        );
         if (!canAcceptInput()) {
-            delete position;
             return;
         }
-        if (outstandIngInteractionEvent != nullptr) delete outstandIngInteractionEvent;
-        outstandIngInteractionEvent = position;
+        outstandIngInteractionEvent = std::move(position);
     }
 
     bool canAcceptInput()
@@ -1088,8 +1086,7 @@ private:
         if (outstandIngInteractionEvent != nullptr)
         {
             clickableObjectCode = getClickableObjectCode(outstandIngInteractionEvent->x, outstandIngInteractionEvent->y);
-            delete outstandIngInteractionEvent;
-            outstandIngInteractionEvent = nullptr;
+            outstandIngInteractionEvent.reset();
         }
 
         switch (scrState)
@@ -1175,7 +1172,7 @@ private:
                             break;
                         case 20://- OK
                             eventRoutine(RoutineCode::MENU_SOUND);
-                            User* useLookupResult = findUserByPin(pin);
+                            std::unique_ptr<User> useLookupResult = findUserByPin(pin);
                             if (useLookupResult != nullptr)
                             {
                                 signIn(useLookupResult);
@@ -1713,12 +1710,11 @@ private:
         //  we have the system to support that
         for (auto iterator = runningAnimations.cbegin(); iterator != runningAnimations.end(); iterator++)
         {
-            auto animation = iterator.operator*();
+            auto& animation = *iterator;
             animation->update(deltaTime);
             // Clean up ended animations
             if (animation->isEnded())
             {
-                delete animation;
                 runningAnimations.erase(iterator--);
             }
         }
@@ -1767,28 +1763,28 @@ private:
         //- Show Live "OK" Instruction
         if (pinCount == 4 || amountCount == 7)
         {
-            initSfText(&R3Txt, "Apasati OK", 350, 200, 18, sf::Color::Yellow, sf::Color::Yellow, sf::Text::Bold);
+            initSfText(R3Txt, "Apasati OK", 350, 200, 18, sf::Color::Yellow, sf::Color::Yellow, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
         //- Screen Clock Text Setup
-        initSfText(&scrClock, getTimeGui(), 490, 25, 13, sf::Color::Red, sf::Color::Red, sf::Text::Bold);
+        initSfText(scrClock, getTimeGui(), 490, 25, 13, sf::Color::Red, sf::Color::Red, sf::Text::Bold);
         window.draw(scrClock);
 
         //- Client Name and IBAN Text Setup
         if (scrState != 1 && scrState != 2 && scrState != 21 && scrState != 22 && scrState != 23)
         {
-            initSfText(&usernameScr, usernameScrStr.str(), 85, 25, 13, sf::Color::Cyan, sf::Color::Cyan, sf::Text::Regular);
+            initSfText(usernameScr, usernameScrStr.str(), 85, 25, 13, sf::Color::Cyan, sf::Color::Cyan, sf::Text::Regular);
             window.draw(usernameScr);
 
-            initSfText(&ibanScr, ibanScrStr.str(), 85, 290, 13, sf::Color::White, sf::Color::White, sf::Text::Regular);
+            initSfText(ibanScr, ibanScrStr.str(), 85, 290, 13, sf::Color::White, sf::Color::White, sf::Text::Regular);
             window.draw(ibanScr);
         }
 
         //- Processing
         if (scrState == 23 || scrState == 17 || scrState == 6 || scrState == 24)
         {
-            initSfText(&R3Txt, "In curs de procesare...", 250, 200, 20, sf::Color::Red, sf::Color::Red, sf::Text::Bold);
+            initSfText(R3Txt, "In curs de procesare...", 250, 200, 20, sf::Color::Red, sf::Color::Red, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
@@ -1797,43 +1793,43 @@ private:
         {
             if (scrState == 18)
             {
-                initSfText(&liveTxt, amountLiveTxt, 280, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
+                initSfText(liveTxt, amountLiveTxt, 280, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
                 window.draw(liveTxt);
             }
-            initSfText(&dialog, "Doriti bonul aferent tranzactiei?", 90, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Doriti bonul aferent tranzactiei?", 90, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
-            initSfText(&L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(L1Txt);
-            initSfText(&R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
         //- Confirm?
         if (scrState == 5 || scrState == 12)
         {
-            initSfText(&dialog, "Confirmare", 255, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Confirmare", 255, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
-            initSfText(&L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(L1Txt);
-            initSfText(&R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
         //- Another Transaction?
         if (scrState == 8 || scrState == 15 || scrState == 19)
         {
-            initSfText(&dialog, "Doriti sa efectuati\no noua tranzactie?", 200, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Doriti sa efectuati\no noua tranzactie?", 200, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
-            initSfText(&L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(L1Txt, "<--- Da", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(L1Txt);
-            initSfText(&R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "Nu --->", 465, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
         //- Enter amount
         if (scrState == 4 || scrState == 11)
         {
-            initSfText(&dialog, "Introduceti suma", 210, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Introduceti suma", 210, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
             pinBorderShape.setPosition(230, 150);
             pinBorderShape.setSize(sf::Vector2f(180, 30));
@@ -1841,9 +1837,9 @@ private:
             pinBorderShape.setOutlineColor(sf::Color::White);
             pinBorderShape.setOutlineThickness(2);
             window.draw(pinBorderShape);
-            initSfText(&liveTxt, amountLiveTxt, 270, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(liveTxt, amountLiveTxt, 270, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(liveTxt);
-            initSfText(&R3Txt, "RON", 425, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "RON", 425, 150, 23, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
         }
 
@@ -1851,11 +1847,11 @@ private:
         switch (scrState)
         {
         case 1:
-            initSfText(&dialog, "    Bun venit!\nIntroduceti cardul", 180, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "    Bun venit!\nIntroduceti cardul", 180, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
             break;
         case 2:
-            initSfText(&dialog, "Introduceti codul PIN", 170, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Introduceti codul PIN", 170, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
             amountBorderShape.setPosition(230, 150);
             amountBorderShape.setSize(sf::Vector2f(180, 30));
@@ -1864,50 +1860,40 @@ private:
             amountBorderShape.setOutlineThickness(2);
             window.draw(amountBorderShape);
             pinLiveTxt = std::string(pinCount, '*');
-            initSfText(&liveTxt, pinLiveTxt, 290, 150, 25, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(liveTxt, pinLiveTxt, 290, 150, 25, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(liveTxt);
             break;
         case 3:
-            initSfText(&L1Txt, "<--- Retragere", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(L1Txt, "<--- Retragere", 85, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(L1Txt);
-            initSfText(&R1Txt, "Depunere --->", 390, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R1Txt, "Depunere --->", 390, 130, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R1Txt);
-            initSfText(&R3Txt, "Interogare Sold --->", 300, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "Interogare Sold --->", 300, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
             break;
         case 10:
-            initSfText(&dialog, "Sold insuficient", 210, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Sold insuficient", 210, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
-            initSfText(&R3Txt, "Modificati suma --->", 300, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
+            initSfText(R3Txt, "Modificati suma --->", 300, 225, 20, sf::Color::White, sf::Color::White, sf::Text::Bold);
             window.draw(R3Txt);
             break;
         case 13:
-            initSfText(&dialog, "Plasati numerarul in bancomat", 120, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Plasati numerarul in bancomat", 120, 50, 22, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
             break;
         case 21:
-            initSfText(&dialog, "Ati introdus un PIN incorect\n        OK | Cancel?", 110, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "Ati introdus un PIN incorect\n        OK | Cancel?", 110, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
             break;
         case 22:
-            initSfText(&dialog, "3 incercari succesive eronate\n  Contul dvs este suspendat\n      Apasati tasta OK", 105, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
+            initSfText(dialog, "3 incercari succesive eronate\n  Contul dvs este suspendat\n      Apasati tasta OK", 105, 50, 24, sf::Color::Green, sf::Color::Green, sf::Text::Bold);
             window.draw(dialog);
         }
     }
 
-    void addRunningAnimation(Animation* animation)
+    void addRunningAnimation(std::unique_ptr<Animation> animation)
     {
-        runningAnimations.push_back(animation);
-    }
-
-    void addCursorAnimation(Animation* animation)
-    {
-        if (cursorAnimation != nullptr)
-        {
-            delete cursorAnimation;
-            cursorAnimation = nullptr;
-        }
-        cursorAnimation = animation;
+        runningAnimations.push_back(std::move(animation));
     }
 
     void eventRoutine(unsigned short int routine, std::function<void()> callback = {})
@@ -1933,12 +1919,12 @@ private:
             accountSuspendedFlag = false;
             cardSnd.play();
             vibrate(VibrationDuration::MEDIUM);
-            addRunningAnimation(new VerticalOffsetAnimation(
+            addRunningAnimation(std::make_unique<VerticalOffsetAnimation>(
                     cardAnimationTime, cardSpritePosition,
                     VerticalOffsetAnimationType::ORIGIN_TO_TOP,
                     cardSprite.getLocalBounds().height,
                     [this](OffsetAnimationUpdate update) -> void {
-                        handleOffsetAnimationUpdate(&cardSprite, &update);
+                        handleOffsetAnimationUpdate(cardSprite, update);
                     },
                     [this, callback]() -> void {
                         oss << getTimeCli() << "The cardholder inserted a VISA Classic Card"; logMsg(oss.str());
@@ -1953,12 +1939,12 @@ private:
             cardSnd.play();
             vibrate(VibrationDuration::MEDIUM);
             cardVisible = true;
-            addRunningAnimation(new VerticalOffsetAnimation(
+            addRunningAnimation(std::make_unique<VerticalOffsetAnimation>(
                     cardAnimationTime, cardSpritePosition,
                     VerticalOffsetAnimationType::TOP_TO_ORIGIN,
                     cardSprite.getLocalBounds().height,
                     [this](OffsetAnimationUpdate update) -> void {
-                        handleOffsetAnimationUpdate(&cardSprite, &update);
+                        handleOffsetAnimationUpdate(cardSprite, update);
                     },
                     [this, callback]() -> void {
                         oss << getTimeCli() << "The card was ejected"; logMsg(oss.str());
@@ -1981,12 +1967,12 @@ private:
             cashSnd.play();
             vibrate(VibrationDuration::MEDIUM);
             cashLargeVisible = true;
-            addRunningAnimation(new VerticalOffsetAnimation(
+            addRunningAnimation(std::make_unique<VerticalOffsetAnimation>(
                     cashSndBuf.getDuration(), cashLargeSpritePosition,
                     VerticalOffsetAnimationType::TOP_TO_ORIGIN,
                     cashLargeSprite.getLocalBounds().height,
                     [this](OffsetAnimationUpdate update) -> void {
-                        handleOffsetAnimationUpdate(&cashLargeSprite, &update);
+                        handleOffsetAnimationUpdate(cashLargeSprite, update);
                     },
                     [this, callback]() -> void {
                         vibrate(VibrationDuration::SHORT);
@@ -1997,12 +1983,12 @@ private:
         case RoutineCode::CASH_SMALL_IN:
             cashSnd.play();
             vibrate(VibrationDuration::MEDIUM);
-            addRunningAnimation(new VerticalOffsetAnimation(
+            addRunningAnimation(std::make_unique<VerticalOffsetAnimation>(
                     cashSndBuf.getDuration(), cashSmallSpritePosition,
                     VerticalOffsetAnimationType::ORIGIN_TO_TOP,
                     cashSmallSprite.getLocalBounds().height,
                     [this](OffsetAnimationUpdate update) -> void {
-                        handleOffsetAnimationUpdate(&cashSmallSprite, &update);
+                        handleOffsetAnimationUpdate(cashSmallSprite, update);
                     },
                     [this, callback]() -> void {
                         cashSmallVisible = false;
@@ -2016,12 +2002,12 @@ private:
             vibrate(VibrationDuration::MEDIUM);
             printReceiptSnd.play();
             receiptVisible = true;
-            addRunningAnimation(new VerticalOffsetAnimation(
+            addRunningAnimation(std::make_unique<VerticalOffsetAnimation>(
                     printReceiptSndBuf.getDuration(), receiptSpritePosition,
                     VerticalOffsetAnimationType::TOP_TO_ORIGIN,
                     receiptSprite.getLocalBounds().height,
                     [this](OffsetAnimationUpdate update) -> void {
-                        handleOffsetAnimationUpdate(&receiptSprite, &update);
+                        handleOffsetAnimationUpdate(receiptSprite, update);
                     },
                     [this, callback]() -> void {
                         vibrate(VibrationDuration::SHORT);
@@ -2044,27 +2030,27 @@ private:
         }
     }
 
-    User* findUserByPin(unsigned short pin)
+    std::unique_ptr<User> findUserByPin(unsigned short pin)
     {
         for (int i = 0; i < users.size(); i++)
         {
             if (users[i].pin == pin)
-                return &users[i];
+                return std::make_unique<User>(users[i]);
         }
         return nullptr;
     }
 
     void signOut()
     {
-        user = nullptr;
+        user.reset();
         usernameScrStr.str("");
         ibanScrStr.str("");
         initStates();
     }
 
-    void signIn(User* user)
+    void signIn(std::unique_ptr<User>& u)
     {
-        this->user = user;
+        this->user = std::move(u);
         usernameScrStr << user->lastName << " " << user->firstName;
         ibanScrStr << user->iban;
     }
@@ -2137,14 +2123,14 @@ private:
         system("pause");
     }
 
-    void initSfText(sf::Text *pText, const std::string msg, float posX, float posY, unsigned int charSize, const sf::Color colorFill, const sf::Color colorOutline, const sf::Uint32 style)
+    void initSfText(sf::Text& pText, const std::string msg, float posX, float posY, unsigned int charSize, const sf::Color colorFill, const sf::Color colorOutline, const sf::Uint32 style)
     {
-        pText->setPosition(posX, posY);
-        pText->setString(msg);
-        pText->setCharacterSize(charSize);
-        pText->setFillColor(colorFill);
-        pText->setOutlineColor(colorOutline);
-        pText->setStyle(style);
+        pText.setPosition(posX, posY);
+        pText.setString(msg);
+        pText.setCharacterSize(charSize);
+        pText.setFillColor(colorFill);
+        pText.setOutlineColor(colorOutline);
+        pText.setStyle(style);
     }
 
     inline std::string res(std::string generalPath)
@@ -2166,10 +2152,9 @@ private:
     {
         if (actionTimer == nullptr)
         {
-            actionTimer = new ActionTimer(duration, [this, action]() -> void {
+            actionTimer = std::make_unique<ActionTimer>(duration, [this, action]() -> void {
                 action();
-                delete actionTimer;
-                actionTimer = nullptr;
+                actionTimer.reset();
             });
         }
     }
