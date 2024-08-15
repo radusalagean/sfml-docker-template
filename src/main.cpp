@@ -2123,14 +2123,14 @@ private:
         system("pause");
     }
 
-    void initSfText(sf::Text& pText, const std::string msg, float posX, float posY, unsigned int charSize, const sf::Color colorFill, const sf::Color colorOutline, const sf::Uint32 style)
+    void initSfText(sf::Text& text, const std::string msg, float posX, float posY, unsigned int charSize, const sf::Color colorFill, const sf::Color colorOutline, const sf::Uint32 style)
     {
-        pText.setPosition(posX, posY);
-        pText.setString(msg);
-        pText.setCharacterSize(charSize);
-        pText.setFillColor(colorFill);
-        pText.setOutlineColor(colorOutline);
-        pText.setStyle(style);
+        text.setPosition(posX, posY);
+        text.setString(msg);
+        text.setCharacterSize(charSize);
+        text.setFillColor(colorFill);
+        text.setOutlineColor(colorOutline);
+        text.setStyle(style);
     }
 
     inline std::string res(std::string generalPath)
