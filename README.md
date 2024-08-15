@@ -24,6 +24,10 @@ A template for creating a portable dev environment with cross-compilation suppor
     ```
     docker compose up linux -d
     ```
+- Once the container started, add the repo as a safe repo:
+    ```
+    git config --global --add safe.directory <path/to/repo>
+    ```
 
 ### macOS container
 
