@@ -11,6 +11,8 @@ A template for creating a portable dev environment with cross-compilation suppor
         - Supports debugging and running from VSCode via `launch.json` (`F5` and `Ctrl / Cmd` + `F5`)
     - Compiling binaries for Linux (tested on host OS: Linux, macOS, Windows)
 
+#### Development environment from a Linux Host
+
 - VSCode extensions for development in the container:
     - C/C++ Extension Pack
     - Dev Containers
@@ -22,11 +24,18 @@ A template for creating a portable dev environment with cross-compilation suppor
     ```
 - Start the container with:
     ```
-    docker compose up linux -d
+    ./run-linux-env.sh
     ```
 - Once the container started, add the repo as a safe repo:
     ```
     git config --global --add safe.directory <path/to/repo>
+    ```
+
+#### Limited environment from another Host
+
+- Start the container with:
+    ```
+    ./run-linux-env.sh
     ```
 
 ### macOS container
@@ -34,7 +43,7 @@ A template for creating a portable dev environment with cross-compilation suppor
 - This container can be used for compiling binaries for macOS (tested from host OS: Linux, macOS, Windows)
 - Start the container with:
     ```
-    docker compose up macos -d
+    ./run-macos-env.sh
     ```
 
 ### Windows container
@@ -42,7 +51,7 @@ A template for creating a portable dev environment with cross-compilation suppor
 - This container can be used for compiling binaries for Windows (tested from host OS: Linux, macOS, Windows)
 - Start the container with:
     ```
-    docker compose up windows -d
+    ./run-windows-env.sh
     ```
 
 ## Tasks
